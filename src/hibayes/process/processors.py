@@ -87,7 +87,7 @@ def extract_features(
     categorical_features: list[str] | None = None,
     continuous_features: list[str] | None = None,
     *,
-    interactions: bool = False,
+    interactions: bool | list = False,
     effect_coding_for_main_effects: bool = False,
     standardise: bool = False,
     test: Optional[str] = None,
@@ -106,7 +106,13 @@ def extract_features(
     Args:
         categorical_features: List of categorical column names to extract.
         continuous_features: List of continuous column names to extract.
-        interactions: Whether to extract pairwise interactions.
+        interactions: Either a bool or a list of 2-element pairs. If True, extract all
+            pairwise interactions (categorical × categorical dims for every pair of
+            categorical features, plus continuous × categorical slopes). If a list of
+            pairs (e.g. ``[["model", "task"]]``), build interaction dims only for the
+            named categorical pairs; each pair must reference features listed in
+            ``categorical_features``. This mirrors the list-of-pairs format used by
+            model configs' ``interactions``.
         effect_coding_for_main_effects: Whether to create constrained coords for effect coding.
         standardise: Whether to standardise continuous features.
         test: Column name indicating test data for train/test split
@@ -122,6 +128,25 @@ def extract_features(
     continuous_features = continuous_features or []
     reference_categories = reference_categories or {}
     category_order = category_order or {}
+
+    # Normalise interactions: bool (all pairwise) or explicit list of categorical pairs.
+    interaction_pairs: list[tuple[str, str]] | None = None
+    if isinstance(interactions, (list, tuple)):
+        interaction_pairs = []
+        for pair in interactions:
+            if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+                raise ValueError(
+                    "interactions must be a bool or a list of 2-element pairs of "
+                    f"categorical feature names, got: {pair!r}"
+                )
+            unknown = [c for c in pair if c not in categorical_features]
+            if unknown:
+                raise ValueError(
+                    f"Interaction pair {list(pair)} references feature(s) {unknown} "
+                    f"which are not listed in categorical_features "
+                    f"{categorical_features}."
+                )
+            interaction_pairs.append((pair[0], pair[1]))
 
     def process(
         state: AnalysisState,
@@ -230,23 +255,30 @@ def extract_features(
         # interactions
         if interactions:
             # categorical × categorical dims
-            if len(categorical_features) >= 2:
-                for c1, c2 in combinations(categorical_features, 2):
-                    inter_name = f"{c1}_{c2}"
-                    n1 = int(features[f"num_{c1}"])
-                    n2 = int(features[f"num_{c2}"])
-                    dims[f"{inter_name}_effects"] = [c1, c2]
-                    if display:
-                        display.logger.info(
-                            f"Added interaction dims for '{inter_name}' (full: {n1}×{n2})"
-                        )
-                        if effect_coding_for_main_effects and n1 > 1 and n2 > 1:
-                            display.logger.info(
-                                f"  - Constrained (if used in model): {(n1 - 1)}×{(n2 - 1)}"
-                            )
+            if interaction_pairs is not None:
+                cat_pairs = interaction_pairs
+            elif len(categorical_features) >= 2:
+                cat_pairs = list(combinations(categorical_features, 2))
+            else:
+                cat_pairs = []
 
-            # continuous × categorical: add feature + dims for per-category slopes
-            for x in continuous_features:
+            for c1, c2 in cat_pairs:
+                inter_name = f"{c1}_{c2}"
+                n1 = int(features[f"num_{c1}"])
+                n2 = int(features[f"num_{c2}"])
+                dims[f"{inter_name}_effects"] = [c1, c2]
+                if display:
+                    display.logger.info(
+                        f"Added interaction dims for '{inter_name}' (full: {n1}×{n2})"
+                    )
+                    if effect_coding_for_main_effects and n1 > 1 and n2 > 1:
+                        display.logger.info(
+                            f"  - Constrained (if used in model): {(n1 - 1)}×{(n2 - 1)}"
+                        )
+
+            # continuous × categorical: add feature + dims for per-category slopes.
+            # Only for the bool (all pairwise) form; explicit pairs are categorical only.
+            for x in continuous_features if interaction_pairs is None else []:
                 x_dtype = infer_jax_dtype(state.processed_data[x])
                 if test_mask is not None:
                     x_train_values = jnp.asarray(state.processed_data.loc[train_mask, x].values, dtype=x_dtype)

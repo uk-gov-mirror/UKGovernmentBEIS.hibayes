@@ -57,7 +57,7 @@ def my_processor(
 
 - Categorical features: factorised indices, counts, coords, and dims
 - Continuous features: raw arrays (optionally standardised)
-- Interactions: categorical × categorical dims, continuous × categorical slopes
+- Interactions: categorical × categorical dims, continuous × categorical slopes. Pass `interactions: true` for all pairwise interactions, or a list of pairs (e.g. `interactions: [[model, task]]`) to build interaction dims only for specific categorical pairs — matching the list-of-pairs format used by model configs
 
 Supports effect coding, custom reference categories, custom category ordering, and train/test splitting.
 
@@ -147,7 +147,7 @@ These enable meaningful posterior summaries with named indices rather than integ
 | Processor | Purpose | Key Parameters |
 |-----------|---------|----------------|
 | `extract_observed_feature` | Extract a single column as observed outcome (`obs`) | `feature_name`, `test` (optional split column) |
-| `extract_features` | Full GLM feature extraction with categorical/continuous support | `categorical_features`, `continuous_features`, `interactions`, `effect_coding`, `standardise`, `test` |
+| `extract_features` | Full GLM feature extraction with categorical/continuous support | `categorical_features`, `continuous_features`, `interactions` (bool or list of pairs), `effect_coding_for_main_effects`, `standardise`, `test` |
 | `map_columns` | Rename columns to match expected names | `column_mapping` (dict) |
 | `groupby` | Aggregate data for binomial models | `groupby_columns` (creates `n_correct`, `n_total`) |
 | `drop_rows_with_missing_features` | Remove rows with missing values | `feature_names` (list of columns to check) |

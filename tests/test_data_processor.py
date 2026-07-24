@@ -661,6 +661,107 @@ class TestExtractPredictors:
         # Should not have three-way interaction
         assert "model_task_dataset_effects" not in result.dims
 
+    def test_extract_features_interactions_list_of_pairs(self):
+        """interactions can be a list of pairs to build only specific interactions."""
+        data = pd.DataFrame(
+            {
+                "model": ["gpt-4", "claude", "gpt-4", "claude"],
+                "task": ["math", "reading", "math", "reading"],
+                "dataset": ["A", "B", "A", "B"],
+                "score": [0.8, 0.7, 0.9, 0.6],
+            }
+        )
+        state = AnalysisState(data=data)
+
+        processor = extract_features(
+            categorical_features=["model", "task", "dataset"],
+            interactions=[["model", "task"]],
+        )
+        result = processor(state)
+
+        # Only the named pair gets interaction dims
+        assert result.dims["model_task_effects"] == ["model", "task"]
+        assert "model_dataset_effects" not in result.dims
+        assert "task_dataset_effects" not in result.dims
+
+    def test_extract_features_interactions_list_of_tuples(
+        self, sample_analysis_state: AnalysisState
+    ):
+        """Tuples are accepted as well as lists for interaction pairs."""
+        processor = extract_features(
+            categorical_features=["model", "task"],
+            interactions=[("model", "task")],
+        )
+        result = processor(sample_analysis_state)
+
+        assert result.dims["model_task_effects"] == ["model", "task"]
+
+    def test_extract_features_interactions_list_skips_continuous_slopes(
+        self, sample_analysis_state: AnalysisState
+    ):
+        """Explicit pairs only build categorical interactions - no continuous
+        x categorical slopes (unlike interactions=True)."""
+        processor = extract_features(
+            categorical_features=["model", "task"],
+            continuous_features=["difficulty"],
+            interactions=[["model", "task"]],
+        )
+        result = processor(sample_analysis_state)
+
+        assert "model_task_effects" in result.dims
+        assert "model_difficulty_effects" not in result.dims
+        assert "difficulty_model_effects" not in result.dims
+
+    def test_extract_features_interactions_bool_true_unchanged(
+        self, sample_analysis_state: AnalysisState
+    ):
+        """interactions=True keeps the all-pairwise behaviour including
+        continuous x categorical slopes."""
+        processor = extract_features(
+            categorical_features=["model", "task"],
+            continuous_features=["difficulty"],
+            interactions=True,
+        )
+        result = processor(sample_analysis_state)
+
+        assert "model_task_effects" in result.dims
+        assert "model_difficulty_effects" in result.dims
+        assert "difficulty_model_effects" in result.dims
+
+    def test_extract_features_interactions_pair_unknown_feature_raises(self):
+        """Pairs must reference features listed in categorical_features."""
+        with pytest.raises(ValueError, match=r"not listed in categorical_features"):
+            extract_features(
+                categorical_features=["model", "task"],
+                interactions=[["model", "dataset"]],
+            )
+
+    def test_extract_features_interactions_pair_wrong_shape_raises(self):
+        """Each interaction entry must be a 2-element pair."""
+        with pytest.raises(ValueError, match=r"2-element pairs"):
+            extract_features(
+                categorical_features=["model", "task", "dataset"],
+                interactions=[["model", "task", "dataset"]],
+            )
+
+        with pytest.raises(ValueError, match=r"2-element pairs"):
+            extract_features(
+                categorical_features=["model", "task"],
+                interactions=["model"],
+            )
+
+    def test_extract_features_interactions_empty_list_no_interactions(
+        self, sample_analysis_state: AnalysisState
+    ):
+        """An empty list behaves like interactions=False."""
+        processor = extract_features(
+            categorical_features=["model", "task"],
+            interactions=[],
+        )
+        result = processor(sample_analysis_state)
+
+        assert "model_task_effects" not in result.dims
+
     def test_extract_features_categorical_constrained_coords_content(
         self, sample_analysis_state: AnalysisState
     ):
