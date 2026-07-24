@@ -10,6 +10,7 @@ from rich.text import Text
 from ...analysis_state import AnalysisState
 from ...ui import Display
 from .._communicate import CommunicateResult, communicate
+from ..utils import resolve_models_to_run
 
 
 @communicate
@@ -32,15 +33,7 @@ def summary_table(
         nonlocal vars
 
         # Assemble the list of model analyses that will be processed.
-        if best_model:
-            best = state.get_best_model()
-            if best is None:
-                raise ValueError(
-                    "No best model found – fit a model before calling `summary_table`."
-                )
-            models_to_run = [best]
-        else:
-            models_to_run = state.models
+        models_to_run = resolve_models_to_run(state, best_model, display)
 
         for model_analysis in models_to_run:
             if not model_analysis.is_fitted:

@@ -1,6 +1,44 @@
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 from arviz import InferenceData
+
+if TYPE_CHECKING:
+    from ..analysis_state import AnalysisState, ModelAnalysisState
+    from ..ui import Display
+
+
+def resolve_models_to_run(
+    state: "AnalysisState",
+    best_model: bool,
+    display: "Display | None" = None,
+) -> List["ModelAnalysisState"]:
+    """
+    Resolve which models a communicator should run over.
+
+    When ``best_model`` is False, all models are returned. When True, the best
+    model (per ``state.get_best_model()``) is returned. If only one fitted model
+    exists it is used directly (best of one is unambiguous). If no model has the
+    required diagnostic (e.g. the ``waic`` checker was not run), a warning is
+    logged and all models are returned rather than raising.
+    """
+    if not best_model:
+        return state.models
+
+    fitted_models = [model for model in state.models if model.is_fitted]
+    if len(fitted_models) == 1:
+        return fitted_models
+
+    try:
+        return [state.get_best_model()]
+    except ValueError:
+        if display is not None:
+            display.logger.warning(
+                "best_model=True but no model has the 'elpd_waic' diagnostic needed "
+                "to pick a best model. Enable the 'waic' checker or set "
+                "'best_model: false' in your communicator config. Falling back to "
+                "running over all models."
+            )
+        return state.models
 
 
 def drop_not_present_vars(
