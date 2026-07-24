@@ -3,7 +3,7 @@ title: "Data Loaders"
 description: "Loading and extracting data from Inspect AI evaluation logs"
 ---
 
-To extract data from Inspect logs Hibayes applys a series of extractors to the loaded eval logs.
+To extract data from Inspect logs Hibayes applies a series of extractors to the loaded eval logs.
 
 ## Extractors
 
@@ -67,7 +67,7 @@ def your_custom_extractor(
     keyword: str
 ):
     def extract(sample, eval_log):
-        return {f"contains_{keyword}": if any(keyword in msg.content for msg in sample.messsages)}
+        return {f"contains_{keyword}": any(keyword in msg.content for msg in sample.messages)}
 
     return extract
 

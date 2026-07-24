@@ -37,7 +37,7 @@ Plugin system allows you to add custom extractors, processors, models, and commu
 :::
 
 ::: {.feature-card}
-### 🎨 Pallete of useful analysis
+### 🎨 Palette of useful analysis
 We provide built in methods for common workflows in AI evaluation such as stastical models, recommended health checks and useful plots.
 :::
 
