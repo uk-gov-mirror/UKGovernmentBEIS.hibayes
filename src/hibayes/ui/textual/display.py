@@ -392,6 +392,14 @@ class TextualDisplay:
 
     # -- user prompts ---------------------------------------------------------
 
+    def can_prompt(self) -> bool:
+        """Whether an interactive session is available to prompt the user through.
+
+        Prompts are delivered via the running Textual app UI, so the app must be
+        running for a prompt to ever be answered.
+        """
+        return bool(getattr(self._app, "is_running", False))
+
     def prompt_user(
         self,
         question: str = "Would you like to proceed?",
