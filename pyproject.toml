@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "hibayes"
 version = "1.0.0"
-description = "Add your description here"
+description = "Hierarchical Bayesian modelling for AI evaluation statistics"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
