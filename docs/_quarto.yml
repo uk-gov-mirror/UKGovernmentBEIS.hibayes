@@ -29,6 +29,7 @@ website:
       contents:
         - index.qmd
         - getting-started.qmd
+        - agent-skills.qmd
         - section: "Core Components"
           contents:
             - workflow.qmd

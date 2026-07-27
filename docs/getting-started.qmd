@@ -61,6 +61,10 @@ Run pre-commit manually:
 uv run pre-commit run --all-files
 ```
 
+### Coding agents
+
+Working in a clone of this repository gives Claude Code two HiBayES skills automatically — no setup needed. To use them in your own project, see [Claude Code Skills](agent-skills.qmd).
+
 ## Quick Start
 
 ### Running Examples

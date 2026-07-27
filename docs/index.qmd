@@ -41,11 +41,16 @@ Plugin system allows you to add custom extractors, processors, models, and commu
 We provide built in methods for common workflows in AI evaluation such as stastical models, recommended health checks and useful plots.
 :::
 
+::: {.feature-card}
+### 🤖 Agent skills
+Two [Claude Code skills](agent-skills.qmd) ship with the package, giving coding agents both the pipeline mechanics and the statistical workflow.
+:::
+
 :::
 
 ## Getting Started
 
-Ready to dive in? Check out our [Getting Started Guide](getting-started.qmd) for installation instructions and a tutorial.
+Ready to dive in? Check out our [Getting Started Guide](getting-started.qmd) for installation instructions and a tutorial. If you work with a coding agent, see [Claude Code Skills](agent-skills.qmd).
 
 ## See the UI in Action
 

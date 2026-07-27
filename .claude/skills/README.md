@@ -1,9 +1,5 @@
 # Claude Code skills for HiBayES
 
-Skills for working with HiBayES in Claude Code. **This directory is their only home** — real files,
-no symlinks, no second copy to keep in sync. They are picked up automatically when Claude Code runs
-in a checkout of this repository, with no install step.
-
 They cover the methods from both papers behind the package: [HiBayES](https://arxiv.org/abs/2505.05602)
 for hierarchical modelling of eval data, and [*Quantifying Biases in LLM-as-Judge Evals*](https://openreview.net/pdf?id=q33S4QMuay)
 (Dubois et al., ICML 2026) for grader/judge analyses, whose configs ship in
