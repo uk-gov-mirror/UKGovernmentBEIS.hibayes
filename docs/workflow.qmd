@@ -53,12 +53,12 @@ HiBayES expects Inspect logs in .json or .eval format
 
 ::: {.callout-note}
 ## Default and custom extractors
-To see the defaul extractors you can select from and how to define your own extractos please see [extractors](loaders.qmd).
+To see the default extractors you can select from and how to define your own extractors please see [extractors](loaders.qmd).
 :::
 
 ## Stage 2: Processing Data
 
-The processing stage transforms raw data into model-ready format. It creates a new dataframe, processed_data, leaving the original extracted data unchanged. It add features, coords and dims to the analysisstate.
+The processing stage transforms raw data into model-ready format. It creates a new dataframe, processed_data, leaving the original extracted data unchanged. It adds features, coords and dims to the AnalysisState.
 
 ### Purpose
 - Clean and filter data
@@ -74,7 +74,7 @@ from hibayes.process import ProcessConfig
 from hibayes.analysis import process_data
 
 config = ProcessConfig().from_dict(
-    {"processors": [{"drop_rows_with_missing_features": {"features": ["model", "score", "task"]}},
+    {"processors": [{"drop_rows_with_missing_features": {"feature_names": ["model", "score", "task"]}},
     "extract_observed_feature",
     "extract_features"
     ]}
@@ -120,7 +120,7 @@ models:
 
 ## Stage 4: Checking
 
-Hibayes provides a series of checks to assess the fit of each modelling process. Checks can either pass, fail or return an NA. Checks can run either before modelling fitting e.g. prior predictive checks or after e.g. posterior predictive or rhat. Some like the prior and posterior predictice checks requier user interaction to approve while others such as divergents can be set up to fail as user specified threseholds. Here is an example check config.yaml file with the user interactivity turned off (plots are saved and can be verified at a later date). For more information on available checkers and how to define your own, see our [checkers documentation](checkers.qmd).
+Hibayes provides a series of checks to assess the fit of each modelling process. Checks can either pass, fail or return an NA. Checks can run either before modelling fitting e.g. prior predictive checks or after e.g. posterior predictive or rhat. Some like the prior and posterior predictive checks require user interaction to approve while others such as divergences can be set up to fail at user specified thresholds. Here is an example check config.yaml file with the user interactivity turned off (plots are saved and can be verified at a later date). For more information on available checkers and how to define your own, see our [checkers documentation](checkers.qmd).
 
 ```yaml
 checkers:
@@ -138,7 +138,7 @@ checkers:
 
 ## Stage 5: Communication
 
-Hibayes support two methods of communicating results, plots and tables. Again there are some default plots and tables along with the option of providing your own methods. Learn more about customizing outputs in our [communicators documentation](communicators.qmd).
+Hibayes supports two methods of communicating results, plots and tables. Again there are some default plots and tables along with the option of providing your own methods. Learn more about customizing outputs in our [communicators documentation](communicators.qmd).
 
 ```yaml
 path: path_to_your_custom_communicators.py
@@ -168,8 +168,8 @@ data_loader:
       - base_extractor  # Built-in functional extractor
 data_process:
   processors:
-    - drop_rows_with_missing_features: {features: [model, score, task]}
-    - extract_observed_features
+    - drop_rows_with_missing_features: {feature_names: [model, score, task]}
+    - extract_observed_feature
     - extract_features
 
 model:

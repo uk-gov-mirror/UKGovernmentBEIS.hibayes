@@ -14,6 +14,18 @@ from ..ui import ModellingDisplay
 from ._check import Checker, CheckerResult, checker
 
 
+def _display_can_prompt(display) -> bool:
+    """Whether the display can actually prompt the user for input.
+
+    Displays expose ``can_prompt()``; custom displays which do not implement it
+    are assumed to be able to prompt (previous behaviour).
+    """
+    can_prompt = getattr(display, "can_prompt", None)
+    if callable(can_prompt):
+        return bool(can_prompt())
+    return True
+
+
 @checker(when="before")
 def prior_predictive_check(
     num_samples: int = 1000,
@@ -157,6 +169,16 @@ def prior_predictive_plot(
             if state.model_config.get_plot_params():
                 plot_params.extend(state.model_config.get_plot_params())
 
+        prompt_unavailable = False
+        if interactive and display and not _display_can_prompt(display):
+            prompt_unavailable = True
+            display.logger.warning(
+                "prior_predictive_plot: interactive approval was requested but no "
+                "interactive session is available to prompt through. Skipping the "
+                "user prompt and returning 'NA'. Review the saved plots offline, "
+                "or set 'interactive: false' to silence this warning."
+            )
+
         user_ok = True
         for var in plot_params:
             # Check if variable exists in prior_predictive
@@ -179,7 +201,7 @@ def prior_predictive_plot(
                     **plot_kwargs,
                 )
             except ValueError as e:
-                if ("Too many bins for data range" in str(e) or 
+                if ("Too many bins for data range" in str(e) or
                     "inhomogeneous shape" in str(e) or
                     "setting an array element with a sequence" in str(e)):
                     # Fall back to matplotlib histogram when KDE fails
@@ -216,7 +238,7 @@ def prior_predictive_plot(
                 else:
                     raise
 
-            if display and interactive:
+            if display and interactive and not prompt_unavailable:
                 if plot_kind == "kde":
                     # Extract data for display
                     pp_data = state.inference_data.prior_predictive[
@@ -233,7 +255,7 @@ def prior_predictive_plot(
                     )
 
                 if not display.prompt_user(
-                    f"Is the prior predictive distribution for '{np.var}' acceptable?"
+                    f"Is the prior predictive distribution for '{var}' acceptable?"
                 ):
                     user_ok = False
                     break
@@ -248,6 +270,8 @@ def prior_predictive_plot(
                     bbox_inches="tight",
                 )
 
+        if prompt_unavailable:
+            return state, "NA"
         return state, ("pass" if user_ok else "fail")
 
     return check
@@ -461,23 +485,24 @@ def bfmi(threshold: float = 0.20):
     """
 
     def check(state: ModelAnalysisState, display: ModellingDisplay = None):
-        if "potential_energy" not in state.inference_data.sample_stats:
+        sample_stats = getattr(state.inference_data, "sample_stats", None)
+        if sample_stats is None or "energy" not in sample_stats:
             if display:
-                display.logger.info("BFMI skipped: no potential_energy in sample_stats")
+                display.logger.info("BFMI skipped: no energy in sample_stats")
             return state, "NA"
 
-        if "bfmi" not in state.diagnostics:
-            energy = state.inference_data.sample_stats["potential_energy"].values
-            da = az.stats.bfmi(energy)
+        if "bfmi" in state.diagnostics:
+            values = np.asarray(state.diagnostics["bfmi"])
         else:
-            da = state.inference_data["bfmi"]
+            # az.bfmi reads sample_stats.energy and returns one value per chain
+            values = az.bfmi(state.inference_data)
 
-        state.add_diagnostic("bfmi", da)
-        if np.all(da.values() >= threshold):
+        state.add_diagnostic("bfmi", values)
+        if np.all(values >= threshold):
             return state, "pass"
 
         if display:
-            chains = np.where(da.values() < threshold)[0].tolist()
+            chains = np.where(values < threshold)[0].tolist()
             display.logger.warning(f"Low BFMI in chains: {chains}")
         return state, "fail"
 
@@ -575,7 +600,16 @@ def posterior_predictive_plot(
                 var_names=["prop_pred"] if plot_proportion else ["obs"],
                 **plot_kwargs,
             )
-            if display and interactive:
+            if display and interactive and not _display_can_prompt(display):
+                display.logger.warning(
+                    "posterior_predictive_plot: interactive approval was requested "
+                    "but no interactive session is available to prompt through. "
+                    "Skipping the user prompt and returning 'NA'. Review the saved "
+                    "plots offline, or set 'interactive: false' to silence this "
+                    "warning."
+                )
+                verdict = "NA"
+            elif display and interactive:
                 lines = ax.get_lines()
                 obs_line = next(
                     line for line in lines if line.get_label() == "Observed"

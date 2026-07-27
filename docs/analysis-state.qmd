@@ -102,7 +102,7 @@ To disable frequent saves (save only at stage boundaries):
 ```bash
 hibayes-full --config config.yaml --out ./results --no-frequent-save
 hibayes-model --config config.yaml --analysis-state ./input --out ./results --no-frequent-save
-hibayes-communicate --config config.yaml --analysis-state ./input --out ./results --no-frequent-save
+hibayes-comm --config config.yaml --analysis-state ./input --out ./results --no-frequent-save
 ```
 
 #### Incremental saves

@@ -77,6 +77,8 @@ class Display(Protocol):
         options: list | None = None,
     ) -> bool: ...
 
+    def can_prompt(self) -> bool: ...
+
     # -- checks / communicate -------------------------------------------------
 
     def add_check(

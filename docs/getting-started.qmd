@@ -61,6 +61,10 @@ Run pre-commit manually:
 uv run pre-commit run --all-files
 ```
 
+### Coding agents
+
+Working in a clone of this repository gives Claude Code two HiBayES skills automatically — no setup needed. To use them in your own project, see [Claude Code Skills](agent-skills.qmd).
+
 ## Quick Start
 
 ### Running Examples
@@ -68,13 +72,13 @@ uv run pre-commit run --all-files
 The quickest way to understand HiBayES is to run an example:
 
 ```bash
-cd examples/skewed_score/q1
+cd examples/llm-as-a-judge-usecases/q1
 uv run dvc repro
 ```
 
 Or without DVC:
 ```bash
-cd examples/skewed_score/q1
+cd examples/llm-as-a-judge-usecases/q1
 uv run hibayes-full --config files/config.yaml --out .output
 ```
 
@@ -100,7 +104,7 @@ uv run hibayes-load --config <path-to-config.yaml> \
 ```
 
 #### Processing Data
-Filtering and processing data happening in a separate stage in HiBayES. Any pandas operation is possible. The extracted data is immutable, a new processed data object is created. As part of the processing stage jax arrays are extracted which are then used in modelling, this happens at the end of the processing stage. You will note the appearance of the [AnalysisState](analysis-state.qmd), this object flows through the entire HiBayES process. Here, fitted models, processed data, logs and everything needed to produce the analysis is saved.
+Filtering and processing data happens in a separate stage in HiBayES. Any pandas operation is possible. The extracted data is immutable, a new processed data object is created. As part of the processing stage jax arrays are extracted which are then used in modelling, this happens at the end of the processing stage. You will note the appearance of the [AnalysisState](analysis-state.qmd), this object flows through the entire HiBayES process. Here, fitted models, processed data, logs and everything needed to produce the analysis is saved.
 ```bash
 uv run hibayes-process --config <path-to-config.yaml> \
     --analysis-state <path-to-analysis-state> \
@@ -118,7 +122,7 @@ uv run hibayes-model --config <path-to-config.yaml> \
 #### Communicating Results
 This is where you plot and create tables. Again there are default communication methods, which can be selected in config.yaml and you can create your own methods, please see in [communicate](communicators.qmd)
 ```bash
-uv run hibayes-communicate --config <path-to-config.yaml> \
+uv run hibayes-comm --config <path-to-config.yaml> \
     --analysis-state <path-to-analysis-state> \
     --out <path-to-communicate-results>
 ```
@@ -143,7 +147,7 @@ data_loader:
       - path/to/text.txt
   extractors: # <2>
     enabled:
-      - base
+      - base_extractor
 
 data_process: # <3>
   processors:
@@ -177,7 +181,7 @@ communicate: # <7>
     - summary_table
 ```
 1. you can specify a list of eval logs, or a directory of logs or a txt file containing a list of logs. These can be local files or s3 files
-2. what information do you want to extract from the eval logs? there are a range of built in extractors e.g. base which extracts the required inspect log features. You can also specify your own custom extractors, see the loading section for more info.
+2. what information do you want to extract from the eval logs? there are a range of built in extractors e.g. base_extractor which extracts the required inspect log features. You can also specify your own custom extractors, see the loading section for more info.
 3. Data processors help you filter logs, modify their values and much more. You are now working with a pandas dataframe so anything goes! Process creates a new version of the data, keeping the raw extracted results immutable.
 4. run multiple models with different configurations and find out which one is the best fit.
 5. specify what kind of model fit checks you would like to run. Here we are checking for sensible r_hat values and flagging if there are more than 5 divergences.
@@ -242,7 +246,7 @@ stages: # <1>
      - .output/communicate/
 ```
 1. if you want to use dvc you need to specify the stages to run. This way when you run dvc repro, only the stages which have changed will be rerun
-2. if these anything in deps or params changes rerun on repro!
+2. if anything in deps or params changes, rerun on repro!
 3. as you can see each of the below stages loads and adds to the analysis state
 Run the pipeline:
 ```bash
@@ -260,8 +264,8 @@ f"{effect_name}_effects"
 # Examples: age_effects, model_effects
 
 # Interaction terms
-f"{effect1}_{effect2}_interaction"
-# Examples: age_model_interaction
+f"{effect1}_{effect2}_effects"
+# Examples: age_model_effects
 ```
 
 ### Data Structure References

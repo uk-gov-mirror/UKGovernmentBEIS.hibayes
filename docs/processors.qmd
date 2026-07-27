@@ -57,7 +57,7 @@ def my_processor(
 
 - Categorical features: factorised indices, counts, coords, and dims
 - Continuous features: raw arrays (optionally standardised)
-- Interactions: categorical × categorical dims, continuous × categorical slopes
+- Interactions: categorical × categorical dims, continuous × categorical slopes. Pass `interactions: true` for all pairwise interactions, or a list of pairs (e.g. `interactions: [[model, task]]`) to build interaction dims only for specific categorical pairs — matching the list-of-pairs format used by model configs
 
 Supports effect coding, custom reference categories, custom category ordering, and train/test splitting.
 
@@ -71,10 +71,10 @@ Supports effect coding, custom reference categories, custom category ordering, a
 
 ## Configuring processors
 
-Processors are configured in your `hibayes.yaml` under the `process` section:
+Processors are configured in your `hibayes.yaml` under the `data_process` section:
 
 ```yaml
-process:
+data_process:
   processors:
     - map_columns:
         column_mapping:
@@ -92,7 +92,7 @@ process:
 Or use the simpler list format for processors with default arguments:
 
 ```yaml
-process:
+data_process:
   processors:
     - extract_observed_feature
     - extract_features
@@ -103,7 +103,7 @@ process:
 The `extract_features` processor supports train/test data splitting via the `test` parameter. This is useful for model validation and out-of-sample prediction.
 
 ```yaml
-process:
+data_process:
   processors:
     - extract_features:
         categorical_features: ["model", "task"]
@@ -123,7 +123,7 @@ When `test` is specified:
 To use a custom processor, create a Python file with your processor definition and reference it in your config:
 
 ```yaml
-process:
+data_process:
   path: path/to/my_processors.py
   processors:
     - my_processor:
@@ -147,7 +147,7 @@ These enable meaningful posterior summaries with named indices rather than integ
 | Processor | Purpose | Key Parameters |
 |-----------|---------|----------------|
 | `extract_observed_feature` | Extract a single column as observed outcome (`obs`) | `feature_name`, `test` (optional split column) |
-| `extract_features` | Full GLM feature extraction with categorical/continuous support | `categorical_features`, `continuous_features`, `interactions`, `effect_coding`, `standardise`, `test` |
+| `extract_features` | Full GLM feature extraction with categorical/continuous support | `categorical_features`, `continuous_features`, `interactions` (bool or list of pairs), `effect_coding_for_main_effects`, `standardise`, `test` |
 | `map_columns` | Rename columns to match expected names | `column_mapping` (dict) |
 | `groupby` | Aggregate data for binomial models | `groupby_columns` (creates `n_correct`, `n_total`) |
-| `drop_rows_with_missing_features` | Remove rows with missing values | `features` (list of columns to check) |
+| `drop_rows_with_missing_features` | Remove rows with missing values | `feature_names` (list of columns to check) |

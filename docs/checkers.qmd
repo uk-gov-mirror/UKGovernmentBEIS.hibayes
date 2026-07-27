@@ -9,7 +9,7 @@ It is important to check that your assumptions about the data story along with y
 
 ## What makes up a checker?
 
-Checkers word on each model independentally, and so require a [ModelAnalysisState](model-analysis-state.md) and have an optional argument for the display. They return the ModelAnalysisState with the CheckerResult (pass, fail, error or NA).
+Checkers work on each model independently, and so require a [ModelAnalysisState](model-analysis-state.md) and have an optional argument for the display. They return the ModelAnalysisState with the CheckerResult (pass, fail, error or NA).
 
 ```python
 from hibayes.check import Checker, CheckerResult, checker
@@ -27,12 +27,12 @@ def my_checker(
 
         inference_data = state.inference_data # <3>
 
-        state.add_diagnostic("rng": rng)
+        state.add_diagnostic("rng", rng)
 
         return state, "pass" if rng > chances else "fail"
     return check
 ```
-1. does this check run before or after the modell has been fitted? The checker decorator registers the function so it can be accessed simply by calling the checker string but it also enforces an agreed upon functionality.
+1. does this check run before or after the model has been fitted? The checker decorator registers the function so it can be accessed simply by calling the checker string but it also enforces an agreed upon functionality.
 2. any args you might want the user to pass through the config.
 3. you can access anything in the [ModelAnalysisState](analysis-state.md)
 

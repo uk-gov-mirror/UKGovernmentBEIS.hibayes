@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import logging
+import sys
 import time
 from functools import partial
 from threading import Lock
@@ -325,6 +326,16 @@ class ModellingDisplay:
         plot = plotextMixin(series, title=title, xlim=xlim, ylim=ylim)
         self.body_layout["progress"].update(plot)
         self.live.update(self.layout)
+
+    def can_prompt(self) -> bool:
+        """Whether an interactive session is available to prompt the user through.
+
+        Prompts are read from stdin so a TTY is required.
+        """
+        try:
+            return sys.stdin is not None and sys.stdin.isatty()
+        except (AttributeError, OSError, ValueError):
+            return False
 
     def prompt_user(
         self,

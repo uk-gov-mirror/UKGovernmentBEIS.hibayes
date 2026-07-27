@@ -118,7 +118,11 @@ def ordered_residuals_plot(
             if not model_analysis.is_fitted:
                 continue
 
-            if "obs" not in model_analysis.inference_data.posterior.data_vars:
+            idata = model_analysis.inference_data
+            if (
+                "posterior_predictive" not in idata.groups()
+                or "obs" not in idata.posterior_predictive.data_vars
+            ):
                 if display:
                     display.logger.warning(
                         "No posterior predictive samples - skipping residuals plot"
@@ -127,7 +131,7 @@ def ordered_residuals_plot(
 
             # Calculate residuals
             obs = model_analysis.features["obs"]
-            pred = model_analysis.inference_data.posterior.obs.mean(
+            pred = idata.posterior_predictive.obs.mean(
                 dim=["chain", "draw"]
             ).values
             residuals = obs - pred

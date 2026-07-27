@@ -83,7 +83,7 @@ class ModelAnalysisState:
     def model_name(self) -> str:
         """Get the model name."""
         return (
-            self.model.__name__ + self.model_config.tag
+            f"{self.model.__name__}_{self.model_config.tag}"
             if self.model_config.tag
             else self.model.__name__
         )
@@ -733,12 +733,14 @@ class AnalysisState:
         self, with_respect_to: str = "elpd_waic", minimum: bool = False
     ) -> ModelAnalysisState:
         """
-        Get the best model based on a diagnostic metric (lower is better).
+        Get the best model based on a diagnostic metric (higher is better by default).
 
         Args:
             with_respect_to (str): The diagnostic metric to use for comparison. This needs
             to be an attribute calculated by the checkers and added to diagnoistics.
-            minimum (bool): If True, the model with the minimum value of the diagnostic is returned.
+            minimum (bool): If True, the model with the minimum value of the diagnostic is
+            returned. Use this for lower-is-better metrics; by default the model with the
+            maximum value is returned (appropriate for e.g. elpd_waic where higher is better).
 
         """
         # Collect models that have the specified diagnostic

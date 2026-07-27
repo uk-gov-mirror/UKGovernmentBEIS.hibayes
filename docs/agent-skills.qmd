@@ -1,0 +1,70 @@
+---
+title: "Claude Code Skills"
+description: "Agent skills for running HiBayES analyses and making the statistical decisions inside them"
+---
+
+## Overview
+
+HiBayES ships two [agent skills](https://code.claude.com/docs/en/skills) for [Claude Code](https://claude.com/claude-code), in `.claude/skills/`. A skill is a Markdown file the agent loads when the task matches its description — these two give an agent the package's mechanics and its statistical discipline, so it configures analyses that follow the workflow rather than guessing at YAML.
+
+| Skill | When it fires |
+|---|---|
+| `running-hibayes` | Installing, running, configuring, extending, or debugging an analysis: the five-stage pipeline, the config surface, the CLI, the component registries, watching the TUI, custom components, and the `AnalysisState` output layout. |
+| `hibayes-statistical-workflow` | Statistical decisions inside that pipeline: stating an estimand, choosing a likelihood, how much pooling, priors and predictive checks, MCMC diagnostics, model comparison, and reporting. Ships a plain-language concepts reference for explaining results to non-Bayesians. |
+
+The two cross-reference each other, and an agent doing a real analysis typically uses both.
+
+## Installation
+
+### In a HiBayES checkout
+
+Nothing to install. The skills live in `.claude/skills/` in this repository, so Claude Code picks them up automatically when it runs in a clone:
+
+```bash
+git clone https://github.com/UKGovernmentBEIS/hibayes.git
+cd hibayes
+claude
+```
+
+Ask *"which model should I use for these judge scores?"* or *"analyse these eval logs with hibayes"* and the relevant skill loads.
+
+### In your own project
+
+Analysing eval data in your own repository is the more common case. Install the skills as a plugin:
+
+```bash
+/plugin marketplace add UKGovernmentBEIS/hibayes
+/plugin install hibayes-skills@hibayes
+```
+
+Only the `.claude/` directory is fetched, so this does not pull the repository's example data.
+
+To have updates arrive automatically, add the following to `~/.claude/settings.json` (user-wide) or your project's `.claude/settings.json` (shared with everyone who opens it) instead of running the commands above:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "hibayes": {
+      "source": { "source": "github", "repo": "UKGovernmentBEIS/hibayes" },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": { "hibayes-skills@hibayes": true }
+}
+```
+
+`enabledPlugins` is what installs and enables the plugin at session start; registering the marketplace alone installs nothing. To update manually: `/plugin marketplace update hibayes`, then `/reload-plugins`.
+
+Alternatively, copy `.claude/skills/running-hibayes/` and `.claude/skills/hibayes-statistical-workflow/` into your project's own `.claude/skills/`.
+
+## What the skills change
+
+- **Verified reference tables.** Component names, config keys, CLI flags and defaults are checked against `src/hibayes/`, so the agent uses `hibayes-comm` and `data_process:` rather than plausible-looking alternatives.
+- **Unattended runs work.** The agent knows to pass `--no-tui` and set `interactive: false` on the predictive-check plots, and how to hand you a live TUI in `tmux` when you want to watch a fit or approve a plot yourself.
+- **The workflow is not optional.** Prior predictive checks, convergence diagnostics and posterior predictive checks come before conclusions, and a failing diagnostic is reported rather than worked around.
+- **Judge analyses start from the paper.** Grader and judge questions route to the runnable configs in `examples/llm-as-a-judge-usecases/`.
+- **Decisions are explained.** Each statistical choice is stated with its reason in plain language, and the concepts reference supplies fuller explanations when they're wanted.
+
+## Contributing to the skills
+
+The skills are plain Markdown in `.claude/skills/`, with no build step — edit them and open a pull request. Two conventions: verify claims against `src/hibayes/` rather than the docs (registered component names are the `def`s directly under the `@extractor`, `@process`, `@model`, `@checker` and `@communicate` decorators), and bump the "Last reviewed" footer in each `SKILL.md` when you check it against a new version.

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from ...analysis_state import AnalysisState
 from ...ui import ModellingDisplay
 from .._communicate import CommunicateResult, communicate
-from ..utils import drop_not_present_vars
+from ..utils import drop_not_present_vars, resolve_models_to_run
 
 
 @communicate
@@ -27,14 +27,7 @@ def forest_plot(
         Communicate the results of a model analysis.
         """
         nonlocal vars
-        if best_model:
-            # Get the model which has the best fit based on the model fit criteria.
-            best_model_analysis = state.get_best_model()
-            if best_model_analysis is None:
-                raise ValueError("No best model found.")
-            models_to_run = [best_model_analysis]
-        else:
-            models_to_run = state.models
+        models_to_run = resolve_models_to_run(state, best_model, display)
 
         for model_analysis in models_to_run:
             model_vars = vars
@@ -95,13 +88,7 @@ def trace_plot(
         """
         nonlocal vars
 
-        if best_model:
-            best_model_analysis = state.get_best_model()
-            if best_model_analysis is None:
-                raise ValueError("No best model found.")
-            models_to_run = [best_model_analysis]
-        else:
-            models_to_run = state.models
+        models_to_run = resolve_models_to_run(state, best_model, display)
 
         for model_analysis in models_to_run:
             model_vars = vars
@@ -154,13 +141,7 @@ def pair_plot(
         Communicate pairwise relationships (e.g., KDE) among variables.
         """
         nonlocal vars
-        if best_model:
-            best_model_analysis = state.get_best_model()
-            if best_model_analysis is None:
-                raise ValueError("No best model found.")
-            models_to_run = [best_model_analysis]
-        else:
-            models_to_run = state.models
+        models_to_run = resolve_models_to_run(state, best_model, display)
 
         for model_analysis in models_to_run:
             model_vars = vars
