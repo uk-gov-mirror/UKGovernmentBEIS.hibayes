@@ -92,6 +92,6 @@ def forest_plot(
 3. if you only want to create plots for the model which fitted the model best according the information criterion specified. Otherwise plot for every model.
 4. add the plot to the analysis state. Check output dir for plots
 
-Here is an example forest plot with default configs from [skewed score example](examples/skewed-score.qmd)
+Here is an example forest plot with default configs from [LLM-as-a-judge example](examples/llm-as-a-judge.qmd)
 
 ![forest plot](figs/forest.png)

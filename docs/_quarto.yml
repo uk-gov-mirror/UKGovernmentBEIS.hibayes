@@ -42,7 +42,7 @@ website:
         - section: "Examples"
           contents:
             - examples/hibayes-usecases.qmd
-            - examples/skewed-score.qmd
+            - examples/llm-as-a-judge.qmd
 
   page-footer:
     center:

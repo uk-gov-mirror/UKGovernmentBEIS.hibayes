@@ -1,13 +1,13 @@
 ---
-title: "Skewed Score Analysis"
+title: "LLM-as-a-Judge Analysis"
 description: "Handling ordinal data with ordered logistic models"
 ---
 
 ## Overview
 
-These examples demonstrate how to analyse ordinal evaluation data with skewed distributions using ordered logistic regression models. Located in `examples/skewed_score/`, they showcase custom model implementations and specialised visualisations for ordinal outcomes.
+These examples demonstrate how to analyse ordinal evaluation data with skewed distributions using ordered logistic regression models. Located in `examples/llm-as-a-judge-usecases/`, they showcase custom model implementations and specialised visualisations for ordinal outcomes.
 
-This notebook implements methods from the paper: [**Skewed Score: A Statistical Framework to Assess Autograders**](https://arxiv.org/pdf/2507.03772)
+This notebook implements methods from the paper: [**Quantifying Biases in LLM-as-Judge Evals**](https://openreview.net/pdf?id=q33S4QMuay)
 
 ::: {.callout-warning}
 ## No inspect logs
@@ -117,7 +117,7 @@ check:
 For the comparison the `model_comparison_plot` was added to the communicators.
 
 ::: {layout-ncol=2}
-![When we add the interaction the model predicts the data better](../figs/skew_q2_model_comparison.png)
+![When we add the interaction the model predicts the data better](../figs/q2_model_comparison.png)
 
 ![What's more, the autograder A x LLM A and autograder B x LLM B are significantly not zero suggesting preference!!](../figs/model_ordered_logistic_modelwith_interaction_grader_effects-LLM_effects-grader_LLM_effects_forest.png)
 :::
@@ -175,7 +175,7 @@ def add_categorical_column(
     return processor
 ```
 
-Check out how we defined a custom hierarchical model where grader effects inherit a group effect e.g. Human A inherits from the Human parameter in examples/skewed_score/custom_model.py.
+Check out how we defined a custom hierarchical model where grader effects inherit a group effect e.g. Human A inherits from the Human parameter in examples/llm-as-a-judge-usecases/custom_model.py.
 
 
 ::: {layout-ncol=2}

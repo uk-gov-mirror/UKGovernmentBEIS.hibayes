@@ -7,4 +7,4 @@ Here we document example use cases of HiBayes. More examples incoming! We welcom
 
 ### Examples
 - [Binomial model fitted to hierarchal data](hibayes-usecases.qmd)
-- [An investigation into LLM autograders biases with ordinal data](skewed-score.qmd)
+- [An investigation into LLM-as-a-judge biases with ordinal data](llm-as-a-judge.qmd)

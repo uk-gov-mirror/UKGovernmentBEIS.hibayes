@@ -1,6 +1,6 @@
 # HiBayES
 
-A Python package for analysing data from [Inspect](https://github.com/UKGovernmentBEIS/inspect_ai) logs using statistical modeling techniques presented in [**HiBayES: A Hierarchical Bayesian Modeling Framework for AI Evaluation Statistics**](https://arxiv.org/abs/2505.05602) and [**LLM-as-a-Judge Evaluations**](https://openreview.net/forum?id=eQxVeNZcYT).
+A Python package for analysing data from [Inspect](https://github.com/UKGovernmentBEIS/inspect_ai) logs using statistical modeling techniques presented in [**HiBayES: A Hierarchical Bayesian Modeling Framework for AI Evaluation Statistics**](https://arxiv.org/abs/2505.05602) and [**LLM-as-a-Judge Evaluations**](https://openreview.net/pdf?id=q33S4QMuay).
 
 Please see the [docs](https://ukgovernmentbeis.github.io/hibayes/) for installation instructions, examples and a breakdown of the main features.
 
