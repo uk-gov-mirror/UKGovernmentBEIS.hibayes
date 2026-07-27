@@ -1,0 +1,34 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "hibayes",
+  "description": "Claude Code skills for HiBayES, the hierarchical Bayesian modelling framework for AI evaluation statistics.",
+  "owner": {
+    "name": "UK AI Security Institute"
+  },
+  "plugins": [
+    {
+      "name": "hibayes-skills",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/UKGovernmentBEIS/hibayes.git",
+        "path": ".claude"
+      },
+      "description": "Skills for analysing AI-evaluation data with HiBayES: installing and running the five-stage pipeline (load, process, model, check, communicate), the YAML config and component registries, and the Bayesian workflow — estimand, pooling choice, priors, diagnostics, model comparison, reporting — with a plain-language concepts reference for explaining results.",
+      "author": {
+        "name": "UK AI Security Institute"
+      },
+      "homepage": "https://ukgovernmentbeis.github.io/hibayes/",
+      "repository": "https://github.com/UKGovernmentBEIS/hibayes",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "bayesian",
+        "statistics",
+        "evals",
+        "inspect-ai",
+        "numpyro"
+      ],
+      "strict": false
+    }
+  ]
+}
