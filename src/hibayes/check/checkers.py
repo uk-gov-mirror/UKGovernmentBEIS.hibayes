@@ -485,23 +485,24 @@ def bfmi(threshold: float = 0.20):
     """
 
     def check(state: ModelAnalysisState, display: ModellingDisplay = None):
-        if "potential_energy" not in state.inference_data.sample_stats:
+        sample_stats = getattr(state.inference_data, "sample_stats", None)
+        if sample_stats is None or "energy" not in sample_stats:
             if display:
-                display.logger.info("BFMI skipped: no potential_energy in sample_stats")
+                display.logger.info("BFMI skipped: no energy in sample_stats")
             return state, "NA"
 
-        if "bfmi" not in state.diagnostics:
-            energy = state.inference_data.sample_stats["potential_energy"].values
-            da = az.stats.bfmi(energy)
+        if "bfmi" in state.diagnostics:
+            values = np.asarray(state.diagnostics["bfmi"])
         else:
-            da = state.inference_data["bfmi"]
+            # az.bfmi reads sample_stats.energy and returns one value per chain
+            values = az.bfmi(state.inference_data)
 
-        state.add_diagnostic("bfmi", da)
-        if np.all(da.values() >= threshold):
+        state.add_diagnostic("bfmi", values)
+        if np.all(values >= threshold):
             return state, "pass"
 
         if display:
-            chains = np.where(da.values() < threshold)[0].tolist()
+            chains = np.where(values < threshold)[0].tolist()
             display.logger.warning(f"Low BFMI in chains: {chains}")
         return state, "fail"
 
