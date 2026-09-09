@@ -123,6 +123,66 @@ position in that config does not make it the package default.
 
 **`ordered_logistic_model`** - Ordered logistic regression for ordinal outcomes. Supports main effects, interactions, and configurable cutpoint priors.
 
+### Ordinal priors for scores at the ends of the rubric
+
+The original ordinal priors remain the default: `intercept ~ Normal(0, 1)`,
+`first_cutpoint ~ Normal(-4, 0.2)`, and positive cutpoint spacings from a
+`LogNormal(-0.5, 0.3)` plus `0.3`. They favor scores spread across the rubric.
+In a model with no effects, they give only about `1.75e-17` prior probability
+to `P(score = 0) >= 0.99`. This can substantially inflate estimated nonzero
+rates after an all-zero evaluation. This is strong prior influence, not a
+fixed probability floor: sufficiently many observations can overcome it.
+
+When nearly all scores being at either end is plausible, use the opt-in
+`boundary` preset:
+
+```yaml
+model:
+  models:
+    - name: ordered_logistic_model
+      config:
+        tag: boundary
+        num_classes: 11
+        prior_preset: boundary
+check:
+  checkers:
+    - prior_predictive_plot: {interactive: false}
+    - r_hat
+    - divergences
+    - ess_bulk
+    - ess_tail
+    - bfmi
+    - posterior_predictive_plot: {interactive: false}
+```
+
+The preset uses an intercept scale of `5` and centers the *expected* cutpoint
+span on zero. With `K` categories, the first cutpoint mean is
+`-(K - 2) * (exp(prior_cutpoint_diffs_loc + prior_cutpoint_diffs_scale**2 / 2)
++ min_cutpoint_spacing) / 2`. For two categories it is zero. Effect priors,
+spacing priors, and the first cutpoint scale remain unchanged.
+
+Explicit `prior_intercept_scale` and `prior_first_cutpoint_loc` values override
+the preset, including when supplied through YAML. Leaving them unspecified
+uses the selected preset; existing explicit configurations retain their meaning.
+
+The ordered-logistic likelihood is evaluated as categorical log probabilities
+using stable log-space identities. This is the same statistical likelihood;
+it avoids cancellation when cumulative probabilities round to one near the
+rubric ends, including with float32 arithmetic. Sample-site names are retained.
+
+This is a substantive prior choice, not an uninformative setting. It gives
+more weight to extreme scores and can affect small-sample conclusions. It
+does not address arbitrary concentration in an interior category, and its
+baseline calibration does not guarantee appropriate predictions after adding
+effects or changing the rubric. Check predicted category frequencies and
+compare plausible prior choices for the actual evaluation. A posterior
+interval excluding exactly zero is not, by itself, a calibration failure.
+
+Regression tests cover prior predictions for 2, 5, and 11 categories,
+all-zero posterior behavior across sample sizes, and likelihood and gradient
+stability at extreme predictors. These finite checks do not establish general
+coverage or replace validation for the actual evaluation.
+
 ## Configuring models
 
 Models are configured in your `hibayes.yaml` under the `model` section:
