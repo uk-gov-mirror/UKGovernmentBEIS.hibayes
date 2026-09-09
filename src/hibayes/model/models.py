@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from typing import ClassVar, List, Optional, Tuple
+from typing import List, Optional
 
 import jax
 import jax.numpy as jnp
@@ -27,9 +26,15 @@ def simplified_group_binomial_exponential(
     prior_sigma_group_rate: float = 1.0,
 ) -> Model:
     """
-    Simplified group binomial with exponential prior on group variance.
-    Here we drop the redundant reparameterisation step and introduce less
-    informative priors.
+    Group binomial with an exponential prior on the group standard deviation.
+
+    ``overall_mean`` is a location on the log-odds scale: its sigmoid is the
+    median group probability, not the population average probability. With
+    few groups (especially at all-zero/all-success boundaries), the location
+    and group spread can remain sensitive to their priors even when each
+    group's rate is well estimated. More trials in one group do not provide
+    more independent groups. Use ``binomial_estimands_table`` for explicitly
+    weighted evaluated-group rates and an integrated population rate.
 
     Args:
         prior_mu_overall_loc: Mean of the normal prior for overall mu
@@ -81,6 +86,13 @@ def two_level_group_binomial(
 ) -> Model:
     """
     Two-level group binomial model with customisable priors.
+
+    The default HalfNormal(0.1) group standard deviation strongly pools
+    groups. Its population estimates therefore encode different assumptions
+    from the exponential model; neither model is universally preferable.
+    ``overall_mean`` is a log-odds location, not an average probability.
+    Use ``binomial_estimands_table`` to distinguish evaluated-group averages
+    from inference about a broader population of exchangeable groups.
 
     Args:
         prior_mu_overall_loc: Mean of the normal prior for overall mu
@@ -263,7 +275,7 @@ def ordered_logistic_model(
                         ]
                     )
                     numpyro.deterministic(f"{effect}_effects", coefs)
-                    
+
                 eta += coefs[idx]
 
         # Add continuous main effects

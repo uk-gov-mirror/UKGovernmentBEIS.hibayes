@@ -71,13 +71,51 @@ def my_custom_model(
 
 These models are designed for aggregated binomial data (success counts out of totals) with hierarchical grouping structures.
 
-**`simplified_group_binomial_exponential`** - A simple two-level hierarchical model with exponential prior on group variance. Good starting point for basic grouped data.
+**`simplified_group_binomial_exponential`** - A two-level hierarchical model with an exponential prior on group standard deviation. Allows more group heterogeneity than the default two-level model, making population inference especially sensitive to priors when groups are few.
 
-**`two_level_group_binomial`** - Two-level hierarchical model with half-normal priors on variance components. Includes reparameterisation for better sampling.
+**`two_level_group_binomial`** - The package default. Uses half-normal priors on scale components and a non-centered parameterization. Its default `HalfNormal(0.1)` group standard deviation strongly favors similar groups; this is a substantive pooling assumption.
 
 **`three_level_group_binomial`** - Three-level hierarchical model (group → subgroup → subsubgroup) with half-normal priors. Use for deeply nested data structures.
 
 **`three_level_group_binomial_exponential`** - Three-level hierarchical model with exponential priors on variance components. Alternative prior specification.
+
+### Choosing a grouped binomial estimand
+
+In the two grouped binomial models, a group's success probability is
+`sigmoid(overall_mean + sigma_group * z_group)`. `overall_mean` is the mean
+**log-odds**, so `sigmoid(overall_mean)` is the median probability across the
+modeled population of groups, not its arithmetic mean probability.
+
+Choose the quantity that answers the evaluation question:
+
+| Estimand | Question and weighting |
+|---|---|
+| `median_group_probability` | What is the probability for a group at the population's median? `sigmoid(overall_mean)`; useful for interpreting the existing latent site. |
+| `evaluated_group_mean_probability` | What is average performance across the evaluated groups? Equal weight per group with positive trial count. |
+| `evaluated_trial_mean_probability` | What is average performance under this evaluation's allocation of trials? Weight group probabilities by their total `n_total`, combining repeated rows. |
+| `population_mean_probability` | What is expected performance for a randomly drawn exchangeable group? Integrate `sigmoid(overall_mean + sigma_group * Z)` over `Z ~ Normal(0, 1)` for each posterior draw. |
+
+The last quantity describes a population average. Its posterior interval
+captures uncertainty about that average, not variation in the rate of an
+individual new group or future binomial outcomes. Population group weights
+are implicit in the exchangeable-group model; this is not an item-weighted
+deployment estimate unless that assumption matches the application.
+
+Few observed groups weakly constrain population location and heterogeneity.
+For example, all-zero results may be explained by negative observed-group
+effects while the population location remains close to its prior. Adding
+trials to one group improves its rate estimate, but does not add independent
+information about other groups. Group-level estimates and population
+estimates may therefore differ substantially without a sampler error.
+Compare reasonable priors on both location and group standard deviation,
+including boundary data and different numbers of groups. A pooled-binomial
+reference assumes a different sampling model and is not a universal target.
+
+Use the [binomial estimands communicator](communicators.qmd#binomial-estimands)
+to report these probabilities with posterior uncertainty, including from
+saved fits. The generic `summary_table` continues to summarize the original
+latent sites. Usecase1 compares several models; the exponential model's
+position in that config does not make it the package default.
 
 ### Linear models
 
@@ -138,8 +176,8 @@ For aggregated success/failure data with grouped structure.
 
 | Model | Description | Variance Priors |
 |-------|-------------|-----------------|
-| `simplified_group_binomial_exponential` | Two-level hierarchy (overall → group). Simple starting point for grouped binomial data. | Exponential on group variance |
-| `two_level_group_binomial` | Two-level hierarchy with reparameterisation for better sampling. Default model for basic grouped data. | HalfNormal on variance components |
+| `simplified_group_binomial_exponential` | Two-level hierarchy (overall → group). Population estimates can be sensitive to priors with few groups. | Exponential on group standard deviation |
+| `two_level_group_binomial` | Default model for grouped data; favors strong pooling under its default group scale. | HalfNormal on standard deviations |
 | `three_level_group_binomial` | Three-level hierarchy (overall → group → subgroup → subsubgroup). For deeply nested data like students within schools within districts. | HalfNormal on all variance components |
 | `three_level_group_binomial_exponential` | Three-level hierarchy with simpler exponential priors. Alternative when HalfNormal priors are too informative. | Exponential on all variance components |
 

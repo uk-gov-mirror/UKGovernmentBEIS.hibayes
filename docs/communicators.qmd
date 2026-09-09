@@ -15,6 +15,44 @@ Communicators help you _communicate_ your findings. They cover both tables and p
 | `pair_plot` | Pairwise KDE plots showing parameter correlations | `vars=None`, `best_model=True` |
 | `model_comparison_plot` | Compares models using information criteria (LOO/WAIC) | Requires ≥2 fitted models |
 | `summary_table` | Statistical summary table of posterior parameters | `vars=None`, `best_model=True`, `round_to=2` |
+| `binomial_estimands_table` | Explicit probability-scale summaries for the two grouped binomial models | `best_model=False`, `credible_interval=0.95` |
+
+## Binomial estimands
+
+```yaml
+communicate:
+  communicators:
+    - binomial_estimands_table: {best_model: false, credible_interval: 0.95}
+```
+
+This adds a `model_<name>_binomial_estimands` table with posterior mean,
+standard deviation, and equal-tailed interval bounds (`ci_lower`, `ci_upper`).
+Rows distinguish median group probability, equal-weight evaluated-group
+average, trial-weighted evaluated-group average, and integrated population
+average; see [their definitions and assumptions](models.qmd#choosing-a-grouped-binomial-estimand).
+All values are already probabilities. No link function is applied.
+
+It supports `simplified_group_binomial_exponential` and
+`two_level_group_binomial`, including saved fits that retain `group_index`
+and `n_total` features. Groups with no positive trial counts are excluded
+from evaluated averages; repeated rows contribute their combined trial counts.
+The communicator includes all fitted supported models by default so differences
+between pooling assumptions remain visible. Other models in a mixed config
+are skipped with a warning. The population integral uses adaptive numerical
+integration, in bounded batches, without adding Monte Carlo group noise.
+
+For custom probability statements or plots, access the per-draw quantities:
+
+```python
+from hibayes.communicate import group_binomial_estimands
+
+draws = group_binomial_estimands(model_analysis_state)
+probability_above_threshold = (draws["evaluated_group_mean_probability"] > 0.8).mean()
+```
+
+Rows are ordered by chain, then draw. These are summaries of the fitted
+posterior, not diagnostics or permission to ignore prior sensitivity. Check
+convergence and predictive fit before using them for a threshold claim.
 
 
 

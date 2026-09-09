@@ -1,5 +1,7 @@
 # Changelog
 
+- (2026-09-09) Added `binomial_estimands_table` and per-draw `group_binomial_estimands` for the two grouped binomial models (#81). Explicitly distinguishes median-group, equal-group, trial-weighted, and integrated population probabilities, including for saved fits. Documented pooling assumptions and prior sensitivity with few groups, and added these summaries to usecase1. Model priors and the package default are unchanged.
+
 
 - (2026-07-27) Claude Code skills: Added two agent skills under `.claude/skills/` — `running-hibayes` (installation, the five-stage pipeline, config surface, CLI, component registries, watching the TUI, custom components, `AnalysisState` layout) and `hibayes-statistical-workflow` (estimand, likelihood and pooling choice, priors and predictive checks, MCMC diagnostics, LOO/WAIC comparison, reporting, plus a plain-language concepts reference). They load automatically for agents working in a checkout; `.claude-plugin/marketplace.json` allows installing them into other projects.
 - (2026-07-27) Bugfix: The `bfmi` checker guarded on `potential_energy` in `sample_stats`, which `az.from_numpyro` renames to `lp`, so the checker returned NA for every model — it now guards on `energy`. Also fixed two latent crashes behind that guard, and `ordered_residuals_plot` reading `obs` from the `posterior` group instead of `posterior_predictive` (the plot always warned and skipped).
