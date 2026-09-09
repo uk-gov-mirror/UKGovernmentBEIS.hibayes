@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import ClassVar, List, Optional, Tuple
+from math import exp
+from typing import List, Literal, Optional
 
 import jax
 import jax.numpy as jnp
@@ -8,7 +8,7 @@ import numpyro.distributions as dist
 
 from ..process import Features
 from ._model import Model, model
-from .utils import create_interaction_effects
+from .utils import create_interaction_effects, ordered_logistic_log_probs
 
 
 def check_features(features: Features, required: List[str]) -> None:
@@ -137,21 +137,33 @@ def ordered_logistic_model(
     num_classes: int = 11,
     effect_coding_for_main_effects: bool = True,
     prior_intercept_loc: float = 0.0,
-    prior_intercept_scale: float = 1.0,
+    prior_intercept_scale: Optional[float] = None,
     prior_main_effects_loc: float = 0.0,
     prior_main_effects_scale: float = 1.0,
     prior_continuous_loc: float = 0.0,
     prior_continuous_scale: float = 1.0,
     prior_interaction_loc: float = 0.0,
     prior_interaction_scale: float = 1.0,
-    prior_first_cutpoint_loc: float = -4.0,
+    prior_first_cutpoint_loc: Optional[float] = None,
     prior_first_cutpoint_scale: float = 0.2,
     prior_cutpoint_diffs_loc: float = -0.5,
     prior_cutpoint_diffs_scale: float = 0.3,
     min_cutpoint_spacing: float = 0.3,
+    prior_preset: Literal["default", "boundary"] = "default",
 ) -> Model:
     """
     Ordered logistic regression model with configurable main effects and interactions.
+
+    The default priors favor scores spread across the rubric and strongly
+    disfavor almost all scores being zero. For evaluations where concentration
+    at either end is plausible, select ``prior_preset="boundary"`` and check
+    prior predictions and sensitivity. This preset broadens the intercept to
+    Normal(0, 5) and centers the expected cutpoints on zero for the supplied
+    number of classes. It does not relax the spacing or effect priors, and is
+    not intended for arbitrary concentrations in interior categories.
+
+    Explicit prior arguments override the preset. Omitting the preset preserves
+    the original Normal(0, 1) intercept and Normal(-4, 0.2) first cutpoint.
 
     Args:
         main_effects: List of categorical variables to include as main effects
@@ -161,14 +173,14 @@ def ordered_logistic_model(
         effect_coding_for_main_effects: Whether to use effect coding
             (sum-to-zero constraint)
         prior_intercept_loc: Mean of the normal prior for intercept
-        prior_intercept_scale: Scale of the normal prior for intercept
+        prior_intercept_scale: Intercept scale; None uses 1 (default) or 5 (boundary)
         prior_main_effects_loc: Mean of the normal prior for main effects
         prior_main_effects_scale: Scale of the normal prior for main effects
         prior_continuous_loc: Mean of the normal prior for continuous effects
         prior_continuous_scale: Scale of the normal prior for continuous effects
         prior_interaction_loc: Mean of the normal prior for interactions
         prior_interaction_scale: Scale of the normal prior for interactions
-        prior_first_cutpoint_loc: Mean of the normal prior for first cutpoint
+        prior_first_cutpoint_loc: First cutpoint mean; None uses the preset
         prior_first_cutpoint_scale: Scale of the normal prior for first cutpoint
         prior_cutpoint_diffs_loc: Mean of the log-normal prior for cutpoint
             differences
@@ -176,7 +188,25 @@ def ordered_logistic_model(
             differences
         min_cutpoint_spacing: Minimum spacing between cutpoints to ensure
             identifiability
+        prior_preset: "default" for the original priors, or "boundary" for
+            plausible concentrations at either end of the rubric
     """
+
+    if prior_preset not in ("default", "boundary"):
+        raise ValueError("prior_preset must be 'default' or 'boundary'")
+    if num_classes < 2:
+        raise ValueError("num_classes must be at least 2")
+    if prior_intercept_scale is None:
+        prior_intercept_scale = 5.0 if prior_preset == "boundary" else 1.0
+    if prior_first_cutpoint_loc is None:
+        if prior_preset == "boundary":
+            expected_spacing = (
+                exp(prior_cutpoint_diffs_loc + prior_cutpoint_diffs_scale**2 / 2)
+                + min_cutpoint_spacing
+            )
+            prior_first_cutpoint_loc = -(num_classes - 2) * expected_spacing / 2
+        else:
+            prior_first_cutpoint_loc = -4.0
 
     if main_effects and continuous_effects:
         overlap = set(main_effects) & set(continuous_effects)
@@ -263,7 +293,7 @@ def ordered_logistic_model(
                         ]
                     )
                     numpyro.deterministic(f"{effect}_effects", coefs)
-                    
+
                 eta += coefs[idx]
 
         # Add continuous main effects
@@ -335,7 +365,15 @@ def ordered_logistic_model(
         numpyro.deterministic("cutpoints", cutpoints)
 
         # Likelihood
-        numpyro.sample("obs", dist.OrderedLogistic(eta, cutpoints), obs=features["obs"])
+        # The same ordered-logistic likelihood, evaluated in log space to
+        # avoid CDF cancellation and divergent gradients near rubric ends.
+        numpyro.sample(
+            "obs",
+            dist.Categorical(
+                logits=ordered_logistic_log_probs(jnp.atleast_1d(eta), cutpoints)
+            ),
+            obs=features["obs"],
+        )
 
     return model
 
