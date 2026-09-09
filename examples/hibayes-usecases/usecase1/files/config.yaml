@@ -63,5 +63,6 @@ communicate:
     - forest_plot: {combined: true, best_model: false}
     - trace_plot: {best_model: false}
     - summary_table
+    - binomial_estimands_table: {best_model: false}
     - model_comparison_plot: {ic: waic}
     - model_comparison_plot: {ic: loo}

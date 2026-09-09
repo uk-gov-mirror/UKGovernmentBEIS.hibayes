@@ -113,6 +113,13 @@ data_process:
 
 The configuration tests multiple models with different prior specifications:
 
+The package default is `two_level_group_binomial`; this example explicitly
+compares it with alternatives. With few domains, population estimates can
+depend strongly on the prior for variation between domains. Use
+`binomial_estimands_table` to distinguish an average across evaluated domains
+from a broader population average; `sigmoid(overall_mean)` is neither of
+those arithmetic averages.
+
 ```yaml
 model:
   models:
@@ -161,6 +168,7 @@ communicate:
     - forest_plot: {combined: true, best_model: false}
     - trace_plot: {best_model: false}
     - summary_table
+    - binomial_estimands_table: {best_model: false}
     - model_comparison_plot: {ic: waic}
     - model_comparison_plot: {ic: loo}
 ```
