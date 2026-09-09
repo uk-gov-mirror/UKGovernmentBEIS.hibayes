@@ -1,5 +1,7 @@
 # Changelog
 
+- (2026-09-09) Added an opt-in `boundary` prior preset to `ordered_logistic_model` for evaluations where scores may concentrate at either end of the rubric (#82). Existing default priors and explicit overrides retain their behavior. The equivalent ordered-logistic likelihood is now evaluated in log space to avoid float32 CDF cancellation and divergent gradients near rubric ends. Added prior-predictive, boundary, and numerical-stability regression checks.
+
 
 - (2026-07-27) Claude Code skills: Added two agent skills under `.claude/skills/` — `running-hibayes` (installation, the five-stage pipeline, config surface, CLI, component registries, watching the TUI, custom components, `AnalysisState` layout) and `hibayes-statistical-workflow` (estimand, likelihood and pooling choice, priors and predictive checks, MCMC diagnostics, LOO/WAIC comparison, reporting, plus a plain-language concepts reference). They load automatically for agents working in a checkout; `.claude-plugin/marketplace.json` allows installing them into other projects.
 - (2026-07-27) Bugfix: The `bfmi` checker guarded on `potential_energy` in `sample_stats`, which `az.from_numpyro` renames to `lp`, so the checker returned NA for every model — it now guards on `energy`. Also fixed two latent crashes behind that guard, and `ordered_residuals_plot` reading `obs` from the `posterior` group instead of `posterior_predictive` (the plot always warned and skipped).

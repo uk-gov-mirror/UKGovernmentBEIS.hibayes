@@ -37,6 +37,26 @@ def logit_to_prob(x):
     return 1 / (1 + np.exp(-x))
 
 
+def ordered_logistic_log_probs(predictor, cutpoints):
+    """Ordered-logistic category log probabilities without subtracting CDFs.
+
+    For adjacent cutpoints a < b, sigmoid(b) - sigmoid(a) equals
+    sigmoid(b) * sigmoid(-a) * (1 - exp(a - b)). Working in log space
+    preserves finite gradients when the predictor is far from the cutpoints,
+    including in float32.
+    """
+    shifted = jnp.asarray(cutpoints) - jnp.asarray(predictor)[..., None]
+    log_cdf = -jnp.logaddexp(0, -shifted)
+    log_survival = -jnp.logaddexp(0, shifted)
+    # Use original spacings: subtracting shifted cutpoints can lose precision
+    # for very large predictors.
+    log_spacing = jnp.log(-jnp.expm1(-jnp.diff(jnp.asarray(cutpoints), axis=-1)))
+    interior = log_cdf[..., 1:] + log_survival[..., :-1] + log_spacing
+    return jnp.concatenate(
+        [log_cdf[..., :1], interior, log_survival[..., -1:]], axis=-1
+    )
+
+
 def probit_to_prob(x):
     return norm.cdf(x)
 
